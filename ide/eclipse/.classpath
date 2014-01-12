@@ -21,6 +21,7 @@
 	<classpathentry kind="src" path="packages/apps/Mms/src"/>
 	<classpathentry kind="src" path="packages/apps/Nfc/src"/>
 	<classpathentry kind="src" path="packages/apps/Nfc/nci/src"/>
+	<classpathentry kind="src" path="packages/apps/OmniGears/src"/>
 	<classpathentry kind="src" path="packages/apps/PackageInstaller/src"/>
 	<classpathentry kind="src" path="packages/apps/Phone/src"/>
 	<classpathentry kind="src" path="packages/apps/PhoneCommon/src"/>
