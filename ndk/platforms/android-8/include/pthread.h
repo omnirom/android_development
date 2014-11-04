@@ -42,9 +42,13 @@ typedef struct
     int volatile value;
 } pthread_mutex_t;
 
-#define  PTHREAD_MUTEX_INITIALIZER             {0}
-#define  PTHREAD_RECURSIVE_MUTEX_INITIALIZER   {0x4000}
-#define  PTHREAD_ERRORCHECK_MUTEX_INITIALIZER  {0x8000}
+#define  __PTHREAD_MUTEX_INIT_VALUE            0
+#define  __PTHREAD_RECURSIVE_MUTEX_INIT_VALUE  0x4000
+#define  __PTHREAD_ERRORCHECK_MUTEX_INIT_VALUE 0x8000
+
+#define  PTHREAD_MUTEX_INITIALIZER             {__PTHREAD_MUTEX_INIT_VALUE}
+#define  PTHREAD_RECURSIVE_MUTEX_INITIALIZER   {__PTHREAD_RECURSIVE_MUTEX_INIT_VALUE}
+#define  PTHREAD_ERRORCHECK_MUTEX_INITIALIZER  {__PTHREAD_ERRORCHECK_MUTEX_INIT_VALUE}
 
 enum {
     PTHREAD_MUTEX_NORMAL = 0,
@@ -138,7 +142,9 @@ int pthread_getattr_np(pthread_t thid, pthread_attr_t * attr);
 
 int pthread_create(pthread_t *thread, pthread_attr_t const * attr,
                    void *(*start_routine)(void *), void * arg);
-void pthread_exit(void * retval);
+
+__noreturn void pthread_exit(void * retval);
+
 int pthread_join(pthread_t thid, void ** ret_val);
 int pthread_detach(pthread_t  thid);
 

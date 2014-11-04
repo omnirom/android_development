@@ -40,19 +40,25 @@ subdirs += \
 	external/clang \
 	external/easymock \
 	external/expat \
+	external/libcxx \
+	external/libcxxabi \
+	external/compiler-rt \
 	external/libpng \
 	external/llvm \
 	external/sqlite/dist \
 	external/zlib \
+	external/zopfli \
 	frameworks/base \
 	frameworks/compile \
 	frameworks/native \
 	frameworks/rs \
+	frameworks/tools \
 	system/core/adb \
 	system/core/fastboot \
 	system/core/libcutils \
 	system/core/liblog \
 	system/core/libsparse \
+	system/core/libziparchive \
 	system/core/libzipfile \
 	system/core/libutils \
 	system/extras/ext4_utils

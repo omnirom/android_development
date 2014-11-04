@@ -114,7 +114,7 @@ PTHREAD_WRAPPER(pthread_attr_getguardsize, (pthread_attr_t const *attr, size_t *
 PTHREAD_WRAPPER(pthread_attr_setscope, (pthread_attr_t *attr, int scope), (attr, scope),
                 "(attr:%p, scope:%d)");
 
-PTHREAD_WRAPPER(pthread_attr_getscope, (pthread_attr_t const *attr), (attr), "(attr:%p)");
+PTHREAD_WRAPPER(pthread_attr_getscope, (pthread_attr_t const *attr, int* scope), (attr, scope), "(attr:%p, scope:%p)");
 
 PTHREAD_WRAPPER(pthread_getattr_np, (pthread_t thid, pthread_attr_t *attr), (thid, attr),
                 "(thid:%lx, attr:%p)");
@@ -212,9 +212,6 @@ PTHREAD_WRAPPER(pthread_cond_timedwait_relative_np, (pthread_cond_t *cond, pthre
 
 PTHREAD_WRAPPER(pthread_cond_timeout_np, (pthread_cond_t *cond, pthread_mutex_t *mutex,
                 unsigned msecs), (cond, mutex, msecs), "(cond:%p, mutex:%p, msecs:%u)");
-
-PTHREAD_WRAPPER(pthread_mutex_lock_timeout_np, (pthread_mutex_t *mutex, unsigned msecs),
-                (mutex, msecs), "(mutex:%p, msecs:%u)");
 
 PTHREAD_WRAPPER(pthread_rwlockattr_init, (pthread_rwlockattr_t *attr), (attr), "(attr:%p)");
 

@@ -28,10 +28,11 @@ struct statfs_portable {
     uint64_t        f_bavail;
     uint64_t        f_files;
     uint64_t        f_ffree;
-    __kernel_fsid_t f_fsid;
+    __fsid_t        f_fsid;
     uint32_t        f_namelen;
     uint32_t        f_frsize;
-    uint32_t        f_spare[5];
+    uint32_t        f_flags;
+    uint32_t        f_spare[4];
 };
 
 /*
@@ -46,9 +47,10 @@ struct statfs {
     uint64_t        f_files;
     uint64_t        f_ffree;
     uint64_t        f_bavail;
-    __kernel_fsid_t f_fsid;
+    __fsid_t        f_fsid;
     uint32_t        f_namelen;
-    uint32_t        f_spare[6];
+    uint32_t        f_flags;
+    uint32_t        f_spare[5];
 };
 */
 #endif /* _STATFS_PORTABLE_H_ */
