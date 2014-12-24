@@ -131,6 +131,20 @@ public class Configuration {
             // Trim preceding "./" from path.
             String path = file.getPath().substring(2);
 
+            // Traverse nested directories.
+            if (file.isDirectory()) {
+                if (excludes.exclude(path)) {
+                    // Don't recurse into excluded dirs.
+                    Log.debug("Excluding: " + path);
+                    excludedDirs.add(file);
+                } else {
+                    traverse(file, sourceRoots, jarFiles, excludedDirs,
+                            excludes);
+                }
+
+                continue;
+            }
+
             // Keep track of source roots for .java files.
             if (path.endsWith(".java")) {
                 if (firstJavaFile) {
@@ -155,18 +169,6 @@ public class Configuration {
                 }
 
                 continue;
-            }
-
-            // Traverse nested directories.
-            if (file.isDirectory()) {
-                if (excludes.exclude(path)) {
-                    // Don't recurse into excluded dirs.
-                    Log.debug("Excluding: " + path);
-                    excludedDirs.add(file);
-                } else {
-                    traverse(file, sourceRoots, jarFiles, excludedDirs,
-                            excludes);
-                }
             }
         }
     }
