@@ -16,6 +16,7 @@
 
 import os
 import sys
+import getopt
 
 def write_java_head(tofile, name):
     tofile.write("/* This file is auto-generated from {}.java.  DO NOT MODIFY. */\n\n".format(name))
@@ -36,6 +37,20 @@ for line in file:
 file.close()
 outfile.close()
 
+file = open('src/com/example/android/leanback/GuidedStepHalfScreenActivity.java', 'r')
+outfile = open('src/com/example/android/leanback/GuidedStepSupportHalfScreenActivity.java', 'w')
+write_java_head(outfile, "GuidedStepHalfScreenActivity")
+for line in file:
+    line = line.replace('android.app.Fragment', 'android.support.v4.app.Fragment')
+    line = line.replace('android.app.Activity', 'android.support.v4.app.FragmentActivity')
+    line = line.replace('GuidedStepFragment', 'GuidedStepSupportFragment')
+    line = line.replace('GuidedStepActivity', 'GuidedStepSupportActivity')
+    line = line.replace('GuidedStepHalfScreenActivity', 'GuidedStepSupportHalfScreenActivity')
+    line = line.replace('extends Activity', 'extends FragmentActivity')
+    outfile.write(line)
+file.close()
+outfile.close()
+
 file = open('src/com/example/android/leanback/BrowseFragment.java', 'r')
 outfile = open('src/com/example/android/leanback/BrowseSupportFragment.java', 'w')
 write_java_head(outfile, "BrowseFragment")
@@ -45,10 +60,13 @@ for line in file:
     line = line.replace('BrowseFragment', 'BrowseSupportFragment')
     line = line.replace('GuidedStepFragment', 'GuidedStepSupportFragment')
     line = line.replace('GuidedStepActivity', 'GuidedStepSupportActivity')
+    line = line.replace('getActivity().getFragmentManager()', 'getActivity().getSupportFragmentManager()')
     line = line.replace('BrowseActivity', 'BrowseSupportActivity')
     line = line.replace('DetailsActivity', 'DetailsSupportActivity')
     line = line.replace('SearchActivity', 'SearchSupportActivity')
     line = line.replace('RowsActivity', 'RowsSupportActivity')
+    line = line.replace('RowsFragment', 'RowsSupportFragment')
+    line = line.replace('GuidedStepHalfScreenActivity', 'GuidedStepSupportHalfScreenActivity')
     outfile.write(line)
 file.close()
 outfile.close()
@@ -283,6 +301,7 @@ write_java_head(outfile, "PlaybackOverlayFragment")
 for line in file:
     line = line.replace('PlaybackOverlayFragment', 'PlaybackOverlaySupportFragment')
     line = line.replace('PlaybackControlHelper', 'PlaybackControlSupportHelper')
+    line = line.replace('PlaybackOverlayActivity', 'PlaybackOverlaySupportActivity')
     outfile.write(line)
 file.close()
 outfile.close()
@@ -315,6 +334,33 @@ outfile = open('res/layout/playback_controls_support.xml', 'w')
 for line in file:
     line = replace_xml_head(line, "playback_controls")
     line = line.replace('com.example.android.leanback.PlaybackOverlayFragment', 'com.example.android.leanback.PlaybackOverlaySupportFragment')
+    outfile.write(line)
+file.close()
+outfile.close()
+
+file = open('src/com/example/android/leanback/OnboardingActivity.java', 'r')
+outfile = open('src/com/example/android/leanback/OnboardingSupportActivity.java', 'w')
+write_java_head(outfile, "OnboardingActivity")
+for line in file:
+    line = line.replace('android.app.Fragment', 'android.support.v4.app.Fragment')
+    line = line.replace('android.app.Activity', 'android.support.v4.app.FragmentActivity')
+    line = line.replace('OnboardingActivity', 'OnboardingSupportActivity')
+    line = line.replace('OnboardingDemoFragment', 'OnboardingDemoSupportFragment')
+    line = line.replace('extends Activity', 'extends FragmentActivity')
+    line = line.replace('getFragmentManager()', 'getSupportFragmentManager()')
+    outfile.write(line)
+file.close()
+outfile.close()
+
+file = open('src/com/example/android/leanback/OnboardingDemoFragment.java', 'r')
+outfile = open('src/com/example/android/leanback/OnboardingDemoSupportFragment.java', 'w')
+write_java_head(outfile, "OnboardingDemoFragment")
+for line in file:
+    line = line.replace('android.app.Fragment', 'android.support.v4.app.Fragment')
+    line = line.replace('import android.app.Activity', 'import android.support.v4.app.FragmentActivity')
+    line = line.replace('OnboardingDemoFragment', 'OnboardingDemoSupportFragment')
+    line = line.replace('OnboardingFragment', 'OnboardingSupportFragment')
+    line = line.replace('OnboardingActivity', 'OnboardingSupportActivity')
     outfile.write(line)
 file.close()
 outfile.close()

@@ -18,13 +18,36 @@ package com.example.android.leanback;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
-public class PlaybackOverlaySupportActivity extends FragmentActivity
-{
+import java.util.ArrayList;
+import java.util.List;
+
+public class PlaybackOverlaySupportActivity extends FragmentActivity {
+    private List<PictureInPictureListener> mListeners = new ArrayList<>();
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.playback_controls_support);
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
+        for (PictureInPictureListener listener : mListeners) {
+            listener.onPictureInPictureModeChanged(isInPictureInPictureMode);
+        }
+    }
+
+    public void registerPictureInPictureListener(PictureInPictureListener listener) {
+        mListeners.add(listener);
+    }
+
+    public void unregisterPictureInPictureListener(PictureInPictureListener listener) {
+        mListeners.remove(listener);
+    }
+
+    public interface PictureInPictureListener {
+        void onPictureInPictureModeChanged(boolean isInPictureInPictureMode);
     }
 }

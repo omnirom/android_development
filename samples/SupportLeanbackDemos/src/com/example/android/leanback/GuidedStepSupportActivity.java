@@ -26,11 +26,12 @@ import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v17.leanback.app.GuidedStepSupportFragment;
-import android.support.v17.leanback.widget.GuidedAction;
-import android.support.v17.leanback.widget.GuidedActionsStylist;
 import android.support.v17.leanback.widget.GuidanceStylist;
 import android.support.v17.leanback.widget.GuidanceStylist.Guidance;
+import android.support.v17.leanback.widget.GuidedAction;
+import android.support.v17.leanback.widget.GuidedActionsStylist;
 import android.support.v17.leanback.widget.GuidedActionsStylist.ViewHolder;
+import android.support.v17.leanback.widget.GuidedDatePickerAction;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
@@ -38,6 +39,8 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.inputmethod.EditorInfo;
 
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -51,9 +54,14 @@ public class GuidedStepSupportActivity extends FragmentActivity {
     private static final int LAST_NAME = 4;
     private static final int PASSWORD = 5;
     private static final int PAYMENT = 6;
+    private static final int NEW_PAYMENT = 7;
+    private static final int PAYMENT_EXPIRE = 8;
 
-    private static final int OPTION_CHECK_SET_ID = 10;
-    private static final int DEFAULT_OPTION = 0;
+    private static final long RADIO_ID_BASE = 0;
+    private static final long CHECKBOX_ID_BASE = 100;
+
+    private static final long DEFAULT_OPTION = RADIO_ID_BASE;
+
     private static final String[] OPTION_NAMES = { "Option A", "Option B", "Option C" };
     private static final String[] OPTION_DESCRIPTIONS = { "Here's one thing you can do",
             "Here's another thing you can do", "Here's one more thing you can do" };
@@ -65,7 +73,9 @@ public class GuidedStepSupportActivity extends FragmentActivity {
         Log.v(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.guided_step_activity);
-        GuidedStepSupportFragment.addAsRoot(this, new FirstStepFragment(), R.id.lb_guidedstep_host);
+        if (savedInstanceState == null) {
+            GuidedStepSupportFragment.addAsRoot(this, new FirstStepFragment(), R.id.lb_guidedstep_host);
+        }
     }
 
     @Override
@@ -94,12 +104,24 @@ public class GuidedStepSupportActivity extends FragmentActivity {
                 .build());
     }
 
-    private static void addEditableAction(List<GuidedAction> actions, long id, String title, String desc) {
+    private static void addAction(List<GuidedAction> actions, long id, String title, String desc,
+            List<GuidedAction> subActions) {
         actions.add(new GuidedAction.Builder()
                 .id(id)
                 .title(title)
                 .description(desc)
+                .subActions(subActions)
+                .build());
+    }
+
+    private static void addEditableAction(Context context, List<GuidedAction> actions,
+            long id, String title, String desc) {
+        actions.add(new GuidedAction.Builder(context)
+                .id(id)
+                .title(title)
+                .description(desc)
                 .editable(true)
+                .icon(R.drawable.lb_ic_search_mic)
                 .build());
     }
 
@@ -127,6 +149,14 @@ public class GuidedStepSupportActivity extends FragmentActivity {
                 .build());
     }
 
+    private static void addDatePickerAction(List<GuidedAction> actions, long id, String title) {
+        actions.add(new GuidedDatePickerAction.Builder(null)
+                .id(id)
+                .title(title)
+                .datePickerFormat("MY")
+                .build());
+    }
+
     private static void addEditableDescriptionAction(List<GuidedAction> actions, long id,
             String title, String desc, String editDescription, int descriptionEditInputType) {
         actions.add(new GuidedAction.Builder()
@@ -139,9 +169,10 @@ public class GuidedStepSupportActivity extends FragmentActivity {
                 .build());
     }
 
-    private static void addCheckedAction(List<GuidedAction> actions, Context context,
+    private static void addCheckedAction(List<GuidedAction> actions, long id, Context context,
             String title, String desc, int checkSetId) {
         actions.add(new GuidedAction.Builder()
+                .id(id)
                 .title(title)
                 .description(desc)
                 .checkSetId(checkSetId)
@@ -149,6 +180,7 @@ public class GuidedStepSupportActivity extends FragmentActivity {
     }
 
     public static class FirstStepFragment extends GuidedStepSupportFragment {
+
         @Override
         public int onProvideTheme() {
             return R.style.Theme_Example_Leanback_GuidedStep_First;
@@ -159,16 +191,19 @@ public class GuidedStepSupportActivity extends FragmentActivity {
             String title = getString(R.string.guidedstep_first_title);
             String breadcrumb = getString(R.string.guidedstep_first_breadcrumb);
             String description = getString(R.string.guidedstep_first_description);
-            Drawable icon = getActivity().getDrawable(R.drawable.ic_main_icon);
+            Drawable icon = getActivity().getResources().getDrawable(R.drawable.ic_main_icon);
             return new Guidance(title, description, breadcrumb, icon);
         }
 
         @Override
         public void onCreateActions(List<GuidedAction> actions, Bundle savedInstanceState) {
-            actions.add(new GuidedAction.Builder().constructContinue(getActivity())
+            Context context = getActivity();
+            actions.add(new GuidedAction.Builder(context)
+                    .clickAction(GuidedAction.ACTION_ID_CONTINUE)
                     .description("Let's do it")
                     .build());
-            actions.add(new GuidedAction.Builder().constructCancel(getActivity())
+            actions.add(new GuidedAction.Builder(context)
+                    .clickAction(GuidedAction.ACTION_ID_CANCEL)
                     .description("Never mind")
                     .build());
         }
@@ -182,7 +217,100 @@ public class GuidedStepSupportActivity extends FragmentActivity {
                 finishGuidedStepSupportFragments();
             }
         }
+    }
 
+    static ArrayList<String> sCards = new ArrayList<String>();
+    static int sSelectedCard = -1;
+    static {
+        sCards.add("Visa-1234");
+        sCards.add("Master-4321");
+    }
+
+    public static class NewPaymentStepFragment extends GuidedStepSupportFragment {
+
+        @Override
+        public Guidance onCreateGuidance(Bundle savedInstanceState) {
+            String title = getString(R.string.guidedstep_newpayment_title);
+            String breadcrumb = getString(R.string.guidedstep_newpayment_breadcrumb);
+            String description = getString(R.string.guidedstep_newpayment_description);
+            Drawable icon = getActivity().getResources().getDrawable(R.drawable.ic_main_icon);
+            return new Guidance(title, description, breadcrumb, icon);
+        }
+
+        @Override
+        public void onCreateActions(List<GuidedAction> actions, Bundle savedInstanceState) {
+            addEditableAction(actions, NEW_PAYMENT, "Input credit card number", "",
+                    InputType.TYPE_CLASS_NUMBER,
+                    "Input credit card number", "Input credit card number");
+            addDatePickerAction(actions, PAYMENT_EXPIRE, "Exp:");
+        }
+
+        @Override
+        public void onCreateButtonActions(List<GuidedAction> actions, Bundle savedInstanceState) {
+            Context context = getActivity();
+            actions.add(new GuidedAction.Builder(context).clickAction(GuidedAction.ACTION_ID_OK)
+                    .build());
+            actions.get(actions.size() - 1).setEnabled(false);
+        }
+
+        @Override
+        public void onGuidedActionClicked(GuidedAction action) {
+            if (action.getId() == GuidedAction.ACTION_ID_OK) {
+                CharSequence desc = findActionById(NEW_PAYMENT).getDescription();
+                String cardNumber = desc.subSequence(desc.length() - 4, desc.length()).toString();
+                String card;
+                if ((Integer.parseInt(cardNumber) & 1) == 0) {
+                    card = "Visa "+cardNumber;
+                } else {
+                    card = "Master "+cardNumber;
+                }
+                sSelectedCard = sCards.size();
+                sCards.add(card);
+                popBackStackToGuidedStepSupportFragment(NewPaymentStepFragment.class,
+                        FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            }
+        }
+
+        @Override
+        public long onGuidedActionEditedAndProceed(GuidedAction action) {
+            if (action.getId() == NEW_PAYMENT) {
+                CharSequence editTitle = action.getEditTitle();
+                if (isCardNumberValid(editTitle)) {
+                    editTitle = editTitle.subSequence(editTitle.length() - 4, editTitle.length());
+                    action.setDescription("Visa XXXX-XXXX-XXXX-" + editTitle);
+                    updateOkButton(isExpDateValid(findActionById(PAYMENT_EXPIRE)));
+                    return GuidedAction.ACTION_ID_NEXT;
+                } else if (editTitle.length() == 0) {
+                    action.setDescription("Input credit card number");
+                    updateOkButton(false);
+                    return GuidedAction.ACTION_ID_CURRENT;
+                } else {
+                    action.setDescription("Error credit card number");
+                    updateOkButton(false);
+                    return GuidedAction.ACTION_ID_CURRENT;
+                }
+            } else if (action.getId() == PAYMENT_EXPIRE) {
+                updateOkButton(isExpDateValid(action) &&
+                        isCardNumberValid(findActionById(NEW_PAYMENT).getEditTitle()));
+            }
+            return GuidedAction.ACTION_ID_NEXT;
+        }
+
+        boolean isCardNumberValid(CharSequence number) {
+            return TextUtils.isDigitsOnly(number) && number.length() == 16;
+        }
+
+        boolean isExpDateValid(GuidedAction action) {
+            long date = ((GuidedDatePickerAction) action).getDate();
+            Calendar c = Calendar.getInstance();
+            c.setTimeInMillis(date);
+            return Calendar.getInstance().before(c);
+        }
+
+        void updateOkButton(boolean enabled) {
+            findButtonActionById(GuidedAction.ACTION_ID_OK).setEnabled(enabled);
+            notifyButtonActionChanged(findButtonActionPositionById(GuidedAction.ACTION_ID_OK));
+        }
     }
 
     public static class SecondStepFragment extends GuidedStepSupportFragment {
@@ -206,26 +334,26 @@ public class GuidedStepSupportActivity extends FragmentActivity {
             String title = getString(R.string.guidedstep_second_title);
             String breadcrumb = getString(R.string.guidedstep_second_breadcrumb);
             String description = getString(R.string.guidedstep_second_description);
-            Drawable icon = getActivity().getDrawable(R.drawable.ic_main_icon);
+            Drawable icon = getActivity().getResources().getDrawable(R.drawable.ic_main_icon);
             return new Guidance(title, description, breadcrumb, icon);
         }
 
         @Override
         public void onCreateActions(List<GuidedAction> actions, Bundle savedInstanceState) {
-            addEditableAction(actions, FIRST_NAME, "Pat", "Your first name");
-            addEditableAction(actions, LAST_NAME, "Smith", "Your last name");
-            addEditableAction(actions, PAYMENT, "Payment", "", InputType.TYPE_CLASS_NUMBER,
-                    "Input credit card number", "Input credit card number");
+            addEditableAction(getContext(), actions, FIRST_NAME, "Pat", "Your first name");
+            addEditableAction(getContext(), actions, LAST_NAME, "Smith", "Your last name");
+            List<GuidedAction> subActions = new ArrayList<GuidedAction>();
+            addAction(actions, PAYMENT, "Select Payment", "", subActions);
             addEditableDescriptionAction(actions, PASSWORD, "Password", "", "",
                     InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         }
 
         @Override
         public void onCreateButtonActions(List<GuidedAction> actions, Bundle savedInstanceState) {
-            actions.add(new GuidedAction.Builder().constructContinue(getActivity())
+            actions.add(new GuidedAction.Builder(getActivity())
+                    .clickAction(GuidedAction.ACTION_ID_CONTINUE)
                     .description("Continue")
                     .build());
-            actions.get(actions.size() - 1).setEnabled(false);
         }
 
         @Override
@@ -238,23 +366,7 @@ public class GuidedStepSupportActivity extends FragmentActivity {
 
         @Override
         public long onGuidedActionEditedAndProceed(GuidedAction action) {
-            if (action.getId() == PAYMENT) {
-                CharSequence editTitle = action.getEditTitle();
-                if (TextUtils.isDigitsOnly(editTitle) && editTitle.length() == 16) {
-                    editTitle = editTitle.subSequence(editTitle.length() - 4, editTitle.length());
-                    action.setDescription("Visa XXXX-XXXX-XXXX-"+editTitle);
-                    updateContinue(isPasswordValid());
-                    return GuidedAction.ACTION_ID_NEXT;
-                } else if (editTitle.length() == 0){
-                    action.setDescription("Input credit card number");
-                    updateContinue(false);
-                    return GuidedAction.ACTION_ID_CURRENT;
-                } else {
-                    action.setDescription("Error credit card number");
-                    updateContinue(false);
-                    return GuidedAction.ACTION_ID_CURRENT;
-                }
-            } else if (action.getId() == PASSWORD) {
+            if (action.getId() == PASSWORD) {
                 CharSequence password = action.getEditDescription();
                 if (password.length() > 0) {
                     if (isPaymentValid()) {
@@ -272,8 +384,54 @@ public class GuidedStepSupportActivity extends FragmentActivity {
             return GuidedAction.ACTION_ID_NEXT;
         }
 
+        @Override
+        public boolean onSubGuidedActionClicked(GuidedAction action) {
+            if (action.isChecked()) {
+                String payment = action.getTitle().toString();
+                for (int i = 0; i < sCards.size(); i++) {
+                    if (payment.equals(sCards.get(i))) {
+                        sSelectedCard = i;
+                        findActionById(PAYMENT).setDescription(payment);
+                        notifyActionChanged(findActionPositionById(PAYMENT));
+                        updateContinue(isPasswordValid());
+                        break;
+                    }
+                }
+                return true;
+            } else {
+                FragmentManager fm = getFragmentManager();
+                GuidedStepSupportFragment.add(fm, new NewPaymentStepFragment(), R.id.lb_guidedstep_host);
+                return false;
+            }
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            // when resumed, update sub actions list and selected index from data model.
+            GuidedAction payments = findActionById(PAYMENT);
+            payments.getSubActions().clear();
+            for (int i = 0; i < sCards.size(); i++) {
+                addCheckedAction(payments.getSubActions(), -1, getActivity(), sCards.get(i), "",
+                        GuidedAction.DEFAULT_CHECK_SET_ID);
+                if (i == sSelectedCard) {
+                    payments.getSubActions().get(i).setChecked(true);
+                }
+            }
+            addAction(payments.getSubActions(), NEW_PAYMENT, "Add New Card", "");
+            if (sSelectedCard != -1) {
+                payments.setDescription(sCards.get(sSelectedCard));
+            }
+            notifyActionChanged(findActionPositionById(PAYMENT));
+            updateContinue(isPasswordValid() && isPaymentValid());
+        }
+
         boolean isPaymentValid() {
-            return findActionById(PAYMENT).getDescription().subSequence(0, 4).toString().equals("Visa");
+            CharSequence paymentType = findActionById(PAYMENT).getDescription();
+            return (paymentType.length() >= 4 &&
+                    paymentType.subSequence(0, 4).toString().equals("Visa")) ||
+                    (paymentType.length() >= 6 &&
+                    paymentType.subSequence(0, 6).toString().equals("Master"));
         }
 
         boolean isPasswordValid() {
@@ -289,14 +447,14 @@ public class GuidedStepSupportActivity extends FragmentActivity {
 
     public static class ThirdStepFragment extends GuidedStepSupportFragment {
 
-        private int mSelectedOption = DEFAULT_OPTION;
+        private long mSelectedOption = DEFAULT_OPTION;
 
         @Override
         public Guidance onCreateGuidance(Bundle savedInstanceState) {
             String title = getString(R.string.guidedstep_third_title);
             String breadcrumb = getString(R.string.guidedstep_third_breadcrumb);
             String description = getString(R.string.guidedstep_third_description);
-            Drawable icon = getActivity().getDrawable(R.drawable.ic_main_icon);
+            Drawable icon = getActivity().getResources().getDrawable(R.drawable.ic_main_icon);
             return new Guidance(title, description, breadcrumb, icon);
         }
 
@@ -312,8 +470,8 @@ public class GuidedStepSupportActivity extends FragmentActivity {
 
         @Override
         public void onCreateActions(List<GuidedAction> actions, Bundle savedInstanceState) {
-            String desc = "The description can be quite long as well.  ";
-            desc += "Just be sure to set multilineDescription to true in the GuidedAction.";
+            String desc = "The description can be quite long as well.  " +
+                    "Just be sure to set multilineDescription to true in the GuidedAction.";
             actions.add(new GuidedAction.Builder()
                     .title("Note that Guided Actions can have titles that are quite long.")
                     .description(desc)
@@ -323,21 +481,22 @@ public class GuidedStepSupportActivity extends FragmentActivity {
                     .focusable(false)
                     .build());
             for (int i = 0; i < OPTION_NAMES.length; i++) {
-                addCheckedAction(actions, getActivity(), OPTION_NAMES[i],
+                addCheckedAction(actions, RADIO_ID_BASE + i, getActivity(), OPTION_NAMES[i],
                         OPTION_DESCRIPTIONS[i], GuidedAction.DEFAULT_CHECK_SET_ID);
                 if (i == DEFAULT_OPTION) {
                     actions.get(actions.size() -1).setChecked(true);
                 }
             }
             for (int i = 0; i < OPTION_NAMES.length; i++) {
-                addCheckedAction(actions, getActivity(), OPTION_NAMES[i],
+                addCheckedAction(actions, CHECKBOX_ID_BASE + i, getActivity(), OPTION_NAMES[i],
                         OPTION_DESCRIPTIONS[i], GuidedAction.CHECKBOX_CHECK_SET_ID);
             }
         }
 
         @Override
         public void onCreateButtonActions(List<GuidedAction> actions, Bundle savedInstanceState) {
-            actions.add(new GuidedAction.Builder().constructContinue(getActivity())
+            actions.add(new GuidedAction.Builder(getActivity())
+                    .clickAction(GuidedAction.ACTION_ID_CONTINUE)
                     .build());
         }
 
@@ -347,11 +506,11 @@ public class GuidedStepSupportActivity extends FragmentActivity {
                 FragmentManager fm = getFragmentManager();
                 FourthStepFragment f = new FourthStepFragment();
                 Bundle arguments = new Bundle();
-                arguments.putInt(FourthStepFragment.EXTRA_OPTION, mSelectedOption);
+                arguments.putLong(FourthStepFragment.EXTRA_OPTION, mSelectedOption);
                 f.setArguments(arguments);
                 GuidedStepSupportFragment.add(fm, f, R.id.lb_guidedstep_host);
             } else if (action.getCheckSetId() == GuidedAction.DEFAULT_CHECK_SET_ID) {
-                mSelectedOption = getSelectedActionPosition()-1;
+                mSelectedOption = action.getId();
             }
         }
 
@@ -363,24 +522,25 @@ public class GuidedStepSupportActivity extends FragmentActivity {
         public FourthStepFragment() {
         }
 
-        public int getOption() {
+        public long getOption() {
             Bundle b = getArguments();
             if (b == null) return 0;
-            return b.getInt(EXTRA_OPTION, 0);
+            return b.getLong(EXTRA_OPTION, 0);
         }
 
         @Override
         public Guidance onCreateGuidance(Bundle savedInstanceState) {
             String title = getString(R.string.guidedstep_fourth_title);
             String breadcrumb = getString(R.string.guidedstep_fourth_breadcrumb);
-            String description = "You chose: " + OPTION_NAMES[getOption()];
-            Drawable icon = getActivity().getDrawable(R.drawable.ic_main_icon);
+            String description = "You chose: " + OPTION_NAMES[(int) getOption()];
+            Drawable icon = getActivity().getResources().getDrawable(R.drawable.ic_main_icon);
             return new Guidance(title, description, breadcrumb, icon);
         }
 
         @Override
         public void onCreateActions(List<GuidedAction> actions, Bundle savedInstanceState) {
-            actions.add(new GuidedAction.Builder().constructFinish(getActivity())
+            actions.add(new GuidedAction.Builder(getActivity())
+                    .clickAction(GuidedAction.ACTION_ID_FINISH)
                     .description("All Done...")
                     .build());
             addAction(actions, BACK, "Start Over", "Let's try this again...");

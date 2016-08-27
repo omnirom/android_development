@@ -43,15 +43,15 @@ public class WizardExample1stStepFragment extends WizardExampleBaseStepFragment 
 
     @Override
     public void onCreateActions(@NonNull List<GuidedAction> actions, Bundle savedInstanceState) {
-        GuidedAction action = new GuidedAction.Builder()
+        GuidedAction action = new GuidedAction.Builder(getActivity())
                 .id(ACTION_ID_BUY_HD)
-                .title(getString(R.string.wizard_example_rent_hd))
+                .title(R.string.wizard_example_rent_hd)
                 .editable(false)
                 .description(mMovie.getPriceHd() + " " +
                         getString(R.string.wizard_example_watch_hd))
                 .build();
         actions.add(action);
-        action = new GuidedAction.Builder()
+        action = new GuidedAction.Builder(getActivity())
                 .id(ACTION_ID_BUY_SD)
                 .title(getString(R.string.wizard_example_rent_sd))
                 .editable(false)

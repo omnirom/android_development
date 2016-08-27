@@ -4,7 +4,8 @@
     android:versionCode="1"
     android:versionName="1.0">
 
-    <uses-sdk android:minSdkVersion="17" android:targetSdkVersion="19" />
+    <uses-sdk android:minSdkVersion="17" android:targetSdkVersion="23" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:label="@string/app_name"
@@ -58,9 +59,19 @@
             android:exported="true" />
 
         <activity android:name="PlaybackOverlayActivity"
+            android:configChanges=
+                "screenSize|smallestScreenSize|screenLayout|orientation"
+            android:resizeableActivity="true"
+            android:supportsPictureInPicture="true"
+            android:launchMode="singleTask"
             android:exported="true" />
 
         <activity android:name="PlaybackOverlaySupportActivity"
+            android:configChanges=
+                "screenSize|smallestScreenSize|screenLayout|orientation"
+            android:resizeableActivity="true"
+            android:supportsPictureInPicture="true"
+            android:launchMode="singleTask"
             android:exported="true" />
 
         <activity android:name="VerticalGridActivity"
@@ -98,9 +109,27 @@
             android:windowSoftInputMode="adjustResize"
             android:exported="true" />
 
+        <activity android:name="GuidedStepHalfScreenActivity"
+            android:theme="@style/Theme.Example.Leanback.GuidedStep.Half"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="true" />
+
+        <activity android:name="GuidedStepSupportHalfScreenActivity"
+            android:theme="@style/Theme.Example.Leanback.GuidedStep.Half"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="true" />
+
         <activity android:name="DetailsPresenterSelectionActivity"
             android:theme="@style/Theme.Example.Leanback.GuidedStep"
             android:exported="true" />
+
+        <activity android:name=".OnboardingActivity"
+                  android:theme="@style/Theme.Example.Leanback.Onboarding"
+                  android:exported="true" />
+
+        <activity android:name=".OnboardingSupportActivity"
+                  android:theme="@style/Theme.Example.Leanback.Onboarding"
+                  android:exported="true" />
 
     </application>
 </manifest>

@@ -51,12 +51,13 @@ public class WizardExample3rdStepFragment extends WizardExampleBaseStepFragment 
                 return R.layout.wizard_progress_action_item;
             }
 
-            @Override
-            public int onProvideLayoutId() {
-                return R.layout.wizard_progress_action_container;
-            }
         };
         return stylist;
+    }
+
+    @Override
+    public int onProvideTheme() {
+        return R.style.Theme_Example_LeanbackWizard_NoSelector;
     }
 
     @Override
@@ -78,9 +79,9 @@ public class WizardExample3rdStepFragment extends WizardExampleBaseStepFragment 
 
     @Override
     public void onCreateActions(@NonNull List<GuidedAction> actions, Bundle savedInstanceState) {
-        GuidedAction action = new GuidedAction.Builder()
+        GuidedAction action = new GuidedAction.Builder(getActivity())
                 .id(ACTION_ID_PROCESSING)
-                .title(getString(R.string.wizard_example_processing))
+                .title(R.string.wizard_example_processing)
                 .infoOnly(true)
                 .build();
         actions.add(action);

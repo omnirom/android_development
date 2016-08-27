@@ -35,4 +35,10 @@
     <style name="Theme.Example.Leanback.GuidedStep.First">
         <item name="guidanceIconStyle">@style/Widget.Example.Leanback.FirstStepGuidanceIconStyle</item>
     </style>
+    <style name="Theme.Example.Leanback.GuidedStep.Half" parent="Theme.Leanback.GuidedStep.Half">
+    </style>
+    <style name="Theme.Example.Leanback.Onboarding" parent="Theme.Leanback.Onboarding">
+        <item name="onboardingLogoStyle">@style/Widget.Example.Leanback.OnboardingLogoStyle</item>
+        <item name="onboardingPageIndicatorStyle">@style/Widget.Example.Leanback.OnboardingPageIndicatorStyle</item>
+    </style>
 </resources>

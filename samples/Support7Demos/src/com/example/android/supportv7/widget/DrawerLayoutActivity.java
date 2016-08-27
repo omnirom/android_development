@@ -17,6 +17,8 @@
 package com.example.android.supportv7.widget;
 
 import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -25,8 +27,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import com.example.android.supportv7.R;
@@ -73,7 +77,8 @@ import com.example.android.supportv7.Shakespeare;
  */
 public class DrawerLayoutActivity extends AppCompatActivity {
     private DrawerLayout mDrawerLayout;
-    private ListView mDrawer;
+    private ListView mStartDrawer;
+    private FrameLayout mEndDrawer;
     private TextView mContent;
 
     private ActionBarDrawerToggle mDrawerToggle;
@@ -86,19 +91,21 @@ public class DrawerLayoutActivity extends AppCompatActivity {
         setContentView(R.layout.drawer_layout);
 
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawer = (ListView) findViewById(R.id.start_drawer);
+        mStartDrawer = (ListView) findViewById(R.id.start_drawer);
+        mEndDrawer = (FrameLayout) findViewById(R.id.end_drawer);
         mContent = (TextView) findViewById(R.id.content_text);
 
         mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow_end, GravityCompat.END);
 
         // The drawer title must be set in order to announce state changes when
         // accessibility is turned on. This is typically a simple description,
         // e.g. "Navigation".
         mDrawerLayout.setDrawerTitle(GravityCompat.START, getString(R.string.drawer_title));
 
-        mDrawer.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
+        mStartDrawer.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
                 Shakespeare.TITLES));
-        mDrawer.setOnItemClickListener(new DrawerItemClickListener());
+        mStartDrawer.setOnItemClickListener(new DrawerItemClickListener());
 
         // Find the toolbar in our layout and set it as the support action bar on the activity.
         // This is required to have the drawer slide "over" the toolbar.
@@ -134,7 +141,7 @@ public class DrawerLayoutActivity extends AppCompatActivity {
             }
         };
 
-        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        mDrawerLayout.addDrawerListener(mDrawerToggle);
 
         // Configure the background color fill of the system status bar (on supported platform
         // versions) and the toolbar itself. We're using the same color, and android:statusBar
@@ -142,6 +149,47 @@ public class DrawerLayoutActivity extends AppCompatActivity {
         final int metalBlueColor = getResources().getColor(R.color.drawer_sample_metal_blue);
         mDrawerLayout.setStatusBarBackgroundColor(metalBlueColor);
         mToolbar.setBackgroundColor(metalBlueColor);
+
+        // Register a pre-draw listener to get the initial width of the DrawerLayout so
+        // that we can determine the width of the drawer based on the Material spec at
+        // https://www.google.com/design/spec/patterns/navigation-drawer.html#navigation-drawer-specs
+        mDrawerLayout.getViewTreeObserver().addOnPreDrawListener(
+                new ViewTreeObserver.OnPreDrawListener() {
+                    @Override
+                    public boolean onPreDraw() {
+                        // What is the width of the entire DrawerLayout?
+                        final int drawerLayoutWidth = mDrawerLayout.getWidth();
+
+                        // What is the action bar size?
+                        final Resources.Theme theme = mDrawerLayout.getContext().getTheme();
+                        final TypedArray a = theme.obtainStyledAttributes(
+                                new int[] { android.support.v7.appcompat.R.attr.actionBarSize });
+                        final int actionBarSize = a.getDimensionPixelSize(0, 0);
+                        if (a != null) {
+                            a.recycle();
+                        }
+
+                        // Compute the width of the drawer and set it on the layout params.
+                        final int idealDrawerWidth = 5 * actionBarSize;
+                        final int maxDrawerWidth = Math.max(0, drawerLayoutWidth - actionBarSize);
+                        final int drawerWidth = Math.min(idealDrawerWidth, maxDrawerWidth);
+
+                        final DrawerLayout.LayoutParams startDrawerLp =
+                                (DrawerLayout.LayoutParams) mStartDrawer.getLayoutParams();
+                        startDrawerLp.width = drawerWidth;
+                        mStartDrawer.setLayoutParams(startDrawerLp);
+
+                        final DrawerLayout.LayoutParams endDrawerLp =
+                                (DrawerLayout.LayoutParams) mEndDrawer.getLayoutParams();
+                        endDrawerLp.width = drawerWidth;
+                        mEndDrawer.setLayoutParams(endDrawerLp);
+
+                        // Remove ourselves as the pre-draw listener since this is a one-time
+                        // configuration.
+                        mDrawerLayout.getViewTreeObserver().removeOnPreDrawListener(this);
+                        return true;
+                    }
+        });
     }
 
     @Override
@@ -166,10 +214,22 @@ public class DrawerLayoutActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        // Is the drawer open?
-        if (mDrawerLayout.isDrawerOpen(mDrawer)) {
-            // Close the drawer and return.
-            mDrawerLayout.closeDrawer(mDrawer);
+        boolean hadOpenDrawer = false;
+        // Is the start drawer open?
+        if (mDrawerLayout.isDrawerOpen(mStartDrawer)) {
+            // Close it
+            mDrawerLayout.closeDrawer(mStartDrawer);
+            hadOpenDrawer = true;
+        }
+        // Is the end drawer open?
+        if (mDrawerLayout.isDrawerOpen(mEndDrawer)) {
+            // Close it
+            mDrawerLayout.closeDrawer(mEndDrawer);
+            hadOpenDrawer = true;
+        }
+
+        if (hadOpenDrawer) {
+            // If we had one or both drawers open, now that we've closed it / them, return.
             return;
         }
 
@@ -191,7 +251,7 @@ public class DrawerLayoutActivity extends AppCompatActivity {
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             mContent.setText(Shakespeare.DIALOGUE[position]);
             mToolbar.setTitle(Shakespeare.TITLES[position]);
-            mDrawerLayout.closeDrawer(mDrawer);
+            mDrawerLayout.closeDrawer(mStartDrawer);
         }
     }
 }
